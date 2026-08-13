@@ -82,8 +82,9 @@ public sealed class StubComplianceSchemeProvider : IComplianceSchemeProvider
         return Task.FromResult(status);
     }
 
+    // DEMO-BREAK 4: off-by-one, the leaving date is now treated as exclusive
     private static bool WasMemberOn(SchemeMember member, DateOnly date) =>
-        member.JoinedOn <= date && (member.LeftOn is null || member.LeftOn >= date);
+        member.JoinedOn <= date && (member.LeftOn is null || member.LeftOn > date);
 
     private static int ObligationYearOf(string submissionPeriod) =>
         Shared.SubmissionPeriod.TryParse(submissionPeriod, out var period) ? period.Value.ObligationYear : 0;

@@ -40,7 +40,8 @@ public sealed class StubPackagingDataProvider : IPackagingDataProvider
             SubmissionPeriod = query.SubmissionPeriod ?? "all",
             ObligationYear = query.ObligationYear ?? lines.Select(l => l.ObligationYear).DefaultIfEmpty(0).Max(),
             Totals = TotalsOf(lines),
-            ByMaterial = GroupBy(lines, l => l.Material),
+            // DEMO-BREAK 3: a "top 3 materials" tweak, so the breakdown no longer reconciles
+            ByMaterial = GroupBy(lines, l => l.Material).Take(3).ToList(),
             ByActivity = GroupBy(lines, l => l.Activity),
             ByNation = GroupBy(lines, l => l.FromNation)
         };

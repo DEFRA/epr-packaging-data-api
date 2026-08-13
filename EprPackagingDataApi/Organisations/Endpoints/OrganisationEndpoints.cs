@@ -114,8 +114,8 @@ public static class OrganisationEndpoints
             [FromServices] IDataSourceDescriptor source,
             CancellationToken cancellationToken)
     {
-        if (InvalidPeriod(submissionPeriod, out var problem)) return TypedResults.BadRequest(problem);
-
+        // DEMO-BREAK 5: period validation dropped, so a malformed period silently returns an
+        // empty list instead of a 400 explaining the format
         if (!await organisations.ExistsAsync(organisationId, cancellationToken)) return TypedResults.NotFound();
 
         var all = await packagingData.GetLinesAsync(

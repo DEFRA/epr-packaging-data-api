@@ -19,7 +19,7 @@ public static class Nation
         ["EN"] = England,
         ["NI"] = NorthernIreland,
         ["SC"] = Scotland,
-        ["WS"] = Wales
+        ["WS"] = Scotland // DEMO-BREAK 1: copy-paste slip, Wales mapped to Scotland
     };
 
     /// <summary>
