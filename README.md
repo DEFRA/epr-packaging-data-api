@@ -64,21 +64,37 @@ You can use the CDP Terminal to access the environments' MongoDB.
 
 ### Testing
 
-Run the tests with:
-
-Tests run by running a full `WebApplication` backed by [Ephemeral MongoDB](https://github.com/asimmon/ephemeral-mongo).
-Tests do not use mocking of any sort and read and write from the in-memory database.
+Tests run a full `WebApplication` through `WebApplicationFactory`, so routing, validation and serialisation
+are exercised for real. Persistence is substituted with an NSubstitute mock, so the tests do not need a
+running MongoDB.
 
 ```bash
 dotnet test
-````
+```
+
+Run a single test class or method with a filter:
+
+```bash
+dotnet test --filter "FullyQualifiedName~ExampleEndpointsTest"
+dotnet test --filter "FullyQualifiedName~Health_endpoint_is_available"
+```
 
 ### Running
 
-Run CDP-Deployments application:
+Run the application:
 ```bash
-dotnet run --project EprPackagingDataApi --launch-profile Development
+dotnet run --project EprPackagingDataApi
 ```
+
+This uses the `EprPackagingDataApi` launch profile, listens on http://localhost:8085, and expects MongoDB
+on `127.0.0.1:27017`. Start one with `docker compose up mongodb -d` if you do not have a local install.
+
+### NuGet sources
+
+[NuGet.config](NuGet.config) pins restore to nuget.org and clears inherited sources. If you have DEFRA's
+private Azure DevOps feed configured at machine level for the Azure-hosted EPR services, leaving it in scope
+makes `dotnet restore` fail with `NU1301` after several minutes, because that feed returns 401 without a PAT.
+This service takes no dependency on it.
 
 ### SonarCloud
 
