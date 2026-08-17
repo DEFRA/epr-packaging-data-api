@@ -23,9 +23,8 @@ public sealed class StubOrganisationProvider : IOrganisationProvider
     }
 
     public Task<bool> ExistsAsync(string organisationId, CancellationToken cancellationToken = default) =>
-        // DEMO-BREAK 2: Ordinal instead of OrdinalIgnoreCase, so casing now decides identity
         Task.FromResult(StubDataSet.Organisations
-            .Any(o => string.Equals(o.OrganisationId, organisationId, StringComparison.Ordinal)));
+            .Any(o => string.Equals(o.OrganisationId, organisationId, StringComparison.OrdinalIgnoreCase)));
 
     public Task<IReadOnlyCollection<SubmissionResponse>> GetSubmissionsAsync(
         string organisationId,
