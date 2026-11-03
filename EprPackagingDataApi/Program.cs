@@ -1,4 +1,6 @@
+using EprPackagingDataApi.Authentication;
 using EprPackagingDataApi.ComplianceSchemes.Endpoints;
+using EprPackagingDataApi.Describe.Endpoints;
 using EprPackagingDataApi.Organisations.Endpoints;
 using EprPackagingDataApi.Shared;
 using EprPackagingDataApi.Utils;
@@ -54,6 +56,10 @@ static void ConfigureServices(WebApplicationBuilder builder)
 
     services.AddHealthChecks();
 
+    // Service-to-service authentication (API key ACL), copied from Manage Obligations. Endpoints opt
+    // in; there is no fallback policy, so the CDP health check stays anonymous.
+    services.AddAuthenticationAuthorization();
+
     // Selects which adapters back the provider interfaces. Phase one registers the stubs.
     services.AddPackagingDataProviders(configuration);
 
@@ -92,12 +98,17 @@ static void ConfigureMiddleware(WebApplication app)
     app.UseSerilogRequestLogging();
 
     app.UseHeaderPropagation();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 }
 
 [ExcludeFromCodeCoverage]
 static void ConfigureEndpoints(WebApplication app)
 {
-    app.MapHealthChecks("/health", new HealthCheckOptions());
+    // CDP polls /health to decide whether the container is alive. It must never require
+    // authentication; HealthEndpointsAnonymousTest guards this.
+    app.MapHealthChecks("/health", new HealthCheckOptions()).AllowAnonymous();
 
     // The contract is the deliverable in phase one, so the OpenAPI document is served in every
     // environment rather than gated on Development. There is no data behind it yet.
@@ -105,4 +116,6 @@ static void ConfigureEndpoints(WebApplication app)
 
     app.MapOrganisationEndpoints();
     app.MapComplianceSchemeEndpoints();
+
+    app.MapDescribeEndpoints();
 }

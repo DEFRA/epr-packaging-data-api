@@ -75,6 +75,8 @@ All are `GET`, all are prefixed `/v1`.
 | `/compliance-schemes/{schemeId}/packaging-data/summary` | Tonnage rolled up across the whole scheme |
 | `/compliance-schemes/{schemeId}/reporting-status` | Which members have reported for a period and which have not |
 
+`GET /describe` (not under `/v1`) returns the service name and requires authentication. See [Service-to-service authentication](#service-to-service-authentication).
+
 Shared query parameters:
 
 ```
@@ -104,6 +106,49 @@ reported".
 `SC`, `WS` form is converted at the boundary.
 
 **Empty collections return `200` with an empty array**, never `204`.
+
+## Service-to-service authentication
+
+Callers authenticate with an API key, following the pattern used by the Manage Obligations service
+([DEFRA/waste-obligations](https://github.com/DEFRA/waste-obligations)). CDP lists shared-secret
+Basic auth as a supported option in its
+[service-to-service auth guide](https://github.com/DEFRA/cdp-documentation/blob/main/how-to/service-to-service-auth.md).
+
+The key is sent as HTTP Basic credentials: `Authorization: Basic base64(clientId:secret)`. Each
+client is an entry in the `Acl:Clients` access control list:
+
+| Setting | Where it lives | Example |
+|---|---|---|
+| `Acl__Clients__{clientId}__Type` | CDP app config | `ApiKey` |
+| `Acl__Clients__{clientId}__Scopes__0` | CDP app config | `read` |
+| `Acl__Clients__{clientId}__AllowedEndpoints__0` | CDP app config | `Describe` (the endpoint's `WithName`) |
+| `Acl__Clients__{clientId}__Secret` | **CDP secrets** (portal) | never in config or source |
+
+The packaging submit frontend calls as client `EprPackagingSubmitFrontend`.
+
+Endpoints opt in with `.RequireAuthorization(PolicyNames.Read)` and
+`.AddEndpointFilter<AllowedEndpointFilter>()`. The outcomes are:
+
+- no credentials, or wrong credentials: `401`
+- a known client without the scope: `403`
+- a known client without the endpoint in `AllowedEndpoints`: `404`
+
+There is deliberately no fallback policy.
+
+**`GET /describe`** is a no-op that returns `{ "service": "epr-packaging-data-api" }` to an authenticated
+caller. Use it to prove a caller's credentials work end to end.
+
+**The health checks never require authentication.** CDP polls them, and an auth failure would mark
+the service unhealthy. They are mapped with `.AllowAnonymous()`, and `HealthEndpointsAnonymousTest`
+fails the build if that changes or a fallback policy is added.
+
+Locally, `appsettings.Development.json` defines a `Developer` client:
+
+```bash
+curl -i http://localhost:8085/describe                                # 401
+curl -i -u Developer:developer-pwd http://localhost:8085/describe     # 200
+curl -i http://localhost:8085/health                                  # 200, no auth needed
+```
 
 ## Response shape
 
