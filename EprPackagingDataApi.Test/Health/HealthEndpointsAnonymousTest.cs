@@ -40,7 +40,7 @@ public class HealthEndpointsAnonymousTest
     public async Task Health_check_is_ok_whatever_authorization_is_sent(string route, string? authorization)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
-        await using var factory = AclTestFactory.Create(new ApiTestFactory());
+        await using var factory = new AclTestFactory();
         using var client = factory.CreateClient();
         if (authorization is not null)
             client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", authorization);
@@ -53,7 +53,7 @@ public class HealthEndpointsAnonymousTest
     [Fact]
     public async Task Every_health_endpoint_is_explicitly_anonymous_and_has_no_authorization_requirement()
     {
-        await using var factory = AclTestFactory.Create(new ApiTestFactory());
+        await using var factory = new AclTestFactory();
         var endpoints = factory.Services.GetRequiredService<EndpointDataSource>().Endpoints
             .OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText?.TrimStart('/').StartsWith("health", StringComparison.OrdinalIgnoreCase) == true)
@@ -76,7 +76,7 @@ public class HealthEndpointsAnonymousTest
     {
         // A fallback policy would apply to every endpoint without its own, including any health
         // check someone forgets to mark anonymous. Endpoints opt in to authentication instead.
-        await using var factory = AclTestFactory.Create(new ApiTestFactory());
+        await using var factory = new AclTestFactory();
         var policyProvider = factory.Services.GetRequiredService<IAuthorizationPolicyProvider>();
 
         Assert.Null(await policyProvider.GetFallbackPolicyAsync());
